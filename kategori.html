@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Aplikasi Buku</title>
+	<link rel="stylesheet" href="src/css/paper.css">
+	<style>
+		body{
+			padding-top: 100px;
+		}
+	</style>
+</head>
+<body>
+
+	<!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">AppBuku</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="buku.html">Buku</a></li>
+            <li class="active"><a href="kategori.html">Kategori</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    	<div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-primary">
+            <div class="panel-heading">Tambah Kategori</div>
+            <div class="panel-body">
+              <form id="formKategori" method="post" action="#">
+                <input type="hidden" id="id_kategori" value="">
+                <div class="form-group">
+                  <label for="nama_kategori">Nama Kategori</label>
+                  <input type="text" class="form-control" name="nama_kategori" placeholder="Input Nama Kategori" id="nama_kategori">
+                </div>
+                
+                <button class="btn btn-success" type="submit">Simpan Data</button>
+                <button disabled="disabled" type="button" class="btn btn-warning" id="cancelBtn">Batal</button>
+              </form>
+            </div>
+          </div>
+          
+        </div>
+    		<div class="col-md-8">
+				  <div class="panel panel-primary">
+            <div class="panel-heading">
+              Data Kategori
+            </div>
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table id="tabelKategori" class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Nama Kategori</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+    		</div>
+    	</div>
+      <div class="row">
+        <footer>
+          <p class="text-center">Copyright &copy; 2017 - <a href="http://www.facebook.com/caturandip" target="_blank">Catur Andi Pamungkas</a> (undlabs)</p>
+        </footer>
+      </div>
+    </div>
+	
+
+	<script src="src/js/jquery.js"></script>
+	<script src="src/js/bootstrap.js"></script>
+  <script type="text/javascript">
+
+    // variabel untuk check kondisi save or update
+    let saveMethod = 'insert';
+    //variabel untuk menyimpan URL Ajax
+    let url = '';
+    //untuk menyimpan id saat proses edit/update
+    let id;
+
+    $(document).ready(function(){
+        //Tampilkan Data Ke tabel
+        loadData();
+
+        //kondisi ketika form kategori di submit
+        $('#formKategori').on('submit', function(e){
+          e.preventDefault();
+          //dapatkan nilai dari form
+          let nama_kategori = $('#nama_kategori').val();
+          //validasi simpel
+          if(nama_kategori.trim() == ''){
+            alert('Nama Kategori Harus Diisi');
+            $('#nama_kategori').focus();
+            return;
+          }
+
+          //check kondisi metode penyimpanan jika mode insert maka alamatkan URL ke URI add
+          if(saveMethod == 'insert'){
+            url = 'http://localhost:8000/kategori/add';
+          }else if(saveMethod == 'update'){
+            url = 'http://localhost:8000/kategori/update/' + id;
+          }
+          console.log(url);
+
+          //jalankan proses ajax untuk menyimpan data
+          $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'JSON',
+            // data berbentuk object
+            data: {
+              nama_kategori:  $('#nama_kategori').val()
+            },
+            success: function(data){
+              //jika proses ajax berhasil kosongkan form dan matikan cancel button
+              $('#nama_kategori').val('');
+              $('#cancelBtn').attr('disabled', 'disabled');
+            }
+          }).done(function(){
+            console.log(saveMethod);
+            loadData();
+            saveMethod='insert';
+            // location.reload();            
+          }).catch(function(err){
+            throw err;
+          });
+          return false;
+        });
+
+        //ketika cancel button diklik kembalikan kondisi ke insert mode
+        $('#cancelBtn').on('click', function(){
+          saveMethod = 'insert';
+          $('#nama_kategori').val('');
+          $('#cancelBtn').attr('disabled', 'disabled');
+          $('#nama_kategori').focus();
+        });
+
+    });
+       
+    //Load data tabel
+    function loadData(){
+      $.ajax({
+        method: 'GET',
+        url: 'http://localhost:8000/kategori',
+      }).done(function(data){
+
+        let kategoris = data;
+        let output = "";
+        $.each(kategoris, function(index, kategori){
+          output+= `<tr>`
+          output+=  `<td>${kategori.id_kategori}</td>`;
+          output+=  `<td>${kategori.nama_kategori}</td>`; 
+          output+=  `<td><a href="javascript:void(0)" onclick="editData(${kategori.id_kategori})" class="btn btn-warning"><span class="glyphicon glyphicon-pencil"></span></a>&nbsp;<a href="javascript:void(0)" class="btn btn-danger" onclick="deleteData(${kategori.id_kategori})"><span class="glyphicon glyphicon-trash"></span></a></td>`
+          output+= `</tr>`
+        });
+        $('#tabelKategori > tbody').html(output);
+      });
+    }
+
+    function editData(id_kategori){
+      saveMethod = 'update';
+      $('#cancelBtn').removeAttr('disabled');
+      $.ajax({
+        url: `http://localhost:8000/kategori/find/${id_kategori}`,
+        method: "GET"
+      }).done(function(response){
+        id = response.id_kategori;
+        $('#id_kategori').val(response.id_kategori);
+        $('#nama_kategori').val(response.nama_kategori);
+        $('#nama_kategori').focus();
+      });
+    }
+
+    function deleteData(id){
+      if(confirm('Anda Yakin Akan menghapus data ini ?')){
+        $.ajax({
+          url: `http://localhost:8000/kategori/delete/${id}`,
+          method: 'POST'
+        }).done(function(){
+          setTimeout(function(){
+            loadData();
+          },2000);
+        });
+      }
+    }
+  </script>
+</body>
+</html>

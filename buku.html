@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Aplikasi Buku</title>
+	<link rel="stylesheet" href="src/css/paper.css">
+	<style>
+		body{
+      padding-top: 100px;
+    }
+	</style>
+</head>
+<body>
+	
+	<!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">AppBuku</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="buku.html">Buku</a></li>
+            <li><a href="kategori.html">Kategori</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    	<div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-primary">
+            <div class="panel-heading">Tambah Buku</div>
+            <div class="panel-body">
+              <form id="formBuku" method="post" action="#">
+                <input type="hidden" id="id" value="">
+                <div class="form-group">
+                  <label for="nama_kategori">Nama Kategori</label>
+                  <select class="form-control" name="id_kategori" id="comboKategori">
+                    <!-- Generate by AJAX -->
+                  </select>
+                </div>
+                <div class="form-grup">
+                  <label class="control-label" for="isbn">ISBN</label>
+                  <input class="form-control" type="text" name="isbn" id="isbn" placeholder="ISBN Number">
+                </div> 
+                <div class="form-grup">
+                  <label class="control-label" for="judul_buku">Judul Buku</label>
+                  <input class="form-control" type="text" name="judul_buku" id="judul_buku" placeholder="Judul Buku">
+                </div> 
+                <div class="form-grup">
+                  <label class="control-label" for="pengarang">Pengarang</label>
+                  <input class="form-control" type="text" name="pengarang" id="pengarang" placeholder="Pengarang">
+                </div> 
+                <div class="form-grup">
+                  <label class="control-label" for="tahun_terbit">Tahun Terbit</label>
+                  <input class="form-control" type="text" name="tahun_terbit" id="tahun_terbit" placeholder="Tahun Terbit">
+                </div> 
+                <br>
+                <button class="btn btn-success" type="submit">Simpan Data</button>
+                <button disabled="disabled" type="button" class="btn btn-warning" id="cancelBtn">Batal</button>
+              </form>
+
+            </div>
+          </div>
+          
+        </div>
+    		<div class="col-md-8">
+				  <div class="panel panel-primary">
+            <div class="panel-heading">
+              Data Buku
+            </div>
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table id="tableBuku" class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>ISBN</th>
+                      <th>Judul Buku</th>
+                      <th>Pengarang</th>
+                      <th>Tahun Terbit</th>
+                      <th>Kategori</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+    		</div>
+    	</div>
+      <div class="row">
+        <footer>
+          <p class="text-center">Copyright &copy; 2017 - <a href="http://www.facebook.com/caturandip" target="_blank">Catur Andi Pamungkas</a> (undlabs)</p>
+        </footer>
+      </div>
+    </div>
+
+	<script src="src/js/jquery.js"></script>
+	<script src="src/js/bootstrap.js"></script>
+  <script type="text/javascript">
+    
+    let saveMethod = 'insert';
+    let url = '';
+    var id;
+
+    $(document).ready(function(){
+
+        loadData();
+        loadCombo();
+      
+        $('#formBuku').on('submit', function(e){
+          e.preventDefault();
+	
+          if(saveMethod == 'insert'){
+            url = 'http://localhost:8000/buku/add';
+          }else if(saveMethod == 'update'){
+            url = 'http://localhost:8000/buku/update/' + id;
+          }
+          console.log("URL : ", url);
+		  //Simple Validasi
+		  if($('#comboKategori').val() == ''){
+			alert('Data Kategori harus diisi !');
+			return;
+		  }else if($('#isbn').val() == ''){
+			alert('Data ISBN harus diisi !');
+			return;
+		  }else if($('#judul_buku').val() == ''){
+			alert('Data Judul Buku harus diisi !');
+			return;
+		  }else if($('#pengarang').val() == ''){
+			alert('Data pengarang harus diisi !');
+			return;
+		  }else if($('#tahun_terbit').val() == ''){
+			alert('Data tahun terbit harus diisi !');
+			return;
+		  }
+          $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'JSON',
+            data: {
+              id_kategori: $('#comboKategori').val(),
+              isbn: $('#isbn').val(),
+              judul_buku: $('#judul_buku').val(),
+              pengarang: $('#pengarang').val(),
+              tahun_terbit: $('#tahun_terbit').val()
+            },
+            success: function(data){
+              $('#comboKategori').val('');
+              $('#isbn').val('');
+              $('#judul_buku').val('');
+              $('#pengarang').val('');
+              $('#tahun_terbit').val('');
+            },
+            error: function(err){
+              console.log(err);
+            }
+          }).done(function(){
+            console.log(saveMethod);
+            loadData();
+            saveMethod='insert';
+            // location.reload();
+          });
+          return false;
+        });
+		
+		//ketika tombol batal diklik
+        $('#cancelBtn').on('click', function(){
+          saveMethod = 'insert';
+          $('#comboKategori').val('');
+          $('#isbn').val('');
+          $('#judul_buku').val('');
+          $('#pengarang').val('');
+          $('#tahun_terbit').val('');
+          $('#cancelBtn').attr('disabled', 'disabled');
+          $('#comboKategori').focus();
+        });
+
+    });
+	
+	//load combo box category
+    function loadCombo(){
+      let output='';
+      output+=`<option value="" selected="" disabled="">- Pilih Kategori -</option>`;
+      $.ajax({
+        url: 'http://localhost:8000/kategori/',
+        method: 'GET',
+        dataType: 'JSON',
+      }).done(function(response){
+        let kategori = response;
+        $.each(kategori,function(index, kategori){
+          output += `<option value="${kategori.id_kategori}">${kategori.nama_kategori}</option>`;
+        });
+        $('#comboKategori').html(output);
+      });
+    }
+       
+    function loadData(){
+      $.ajax({
+          method: 'GET',
+          url: 'http://localhost:8000/buku',
+        }).done(function(data){
+          let bukus = data;
+          let output = "";
+          $.each(bukus, function(index, buku){
+            console.log(buku.id);
+            output+= `<tr>`
+            output+=  `<td>${buku.id}</td>`;
+            output+=  `<td>${buku.isbn}</td>`;
+            output+=  `<td>${buku.judul_buku}</td>`;
+            output+=  `<td>${buku.pengarang}</td>`;
+            output+=  `<td>${buku.tahun_terbit}</td>`; 
+            output+=  `<td>${buku.nama_kategori}</td>`,
+            output+=  `<td><a href="javascript:void(0)" onclick="editData(${buku.id})" class="btn btn-sm btn-warning"><span class="glyphicon glyphicon-pencil"></span></a>&nbsp;<a href="javascript:void(0)" class="btn btn-sm btn-danger" onclick="deleteData(${buku.id})"><span class="glyphicon glyphicon-trash"></span></a></td>`
+            output+= `</tr>`
+          });
+          $('#tableBuku > tbody').html(output);
+        });
+    }
+
+    function editData(id_buku){
+      saveMethod = 'update';
+      $('#cancelBtn').removeAttr('disabled');
+      $.ajax({
+        url: `http://localhost:8000/buku/find/${id_buku}`,
+        method: "GET"
+      }).done(function(response){
+        // console.log(response);
+        id = response.id;
+        $('#id').val(response.id);
+        $('#comboKategori').val(response.id_kategori);
+        $('#isbn').val(response.isbn);
+        $('#judul_buku').val(response.judul_buku);
+        $('#pengarang').val(response.pengarang);
+        $('#tahun_terbit').val(response.tahun_terbit);
+        $('#comboKategori').focus();
+      });
+    }
+
+    function deleteData(id_buku){
+      if(confirm('Anda Yakin Akan menghapus data ini ?')){
+        $.ajax({
+          url: `http://localhost:8000/buku/delete/${id_buku}`,
+          method: 'POST'
+        }).done(function(){
+          setTimeout(function(){
+            loadData();
+            // location.reload();
+          },2000);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
